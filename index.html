@@ -692,6 +692,14 @@ function barList(groups, total, color, money = fmtMan){
     <div class="bl-top"><span class="bl-k">${esc(k)}</span><span class="bl-v">${money(v)} <span class="muted">${total ? (v/total*100).toFixed(0) : 0}% · ${n}건</span></span></div>
     <div class="bl-track"><div class="bl-bar" style="width:${(v/max*100).toFixed(1)}%;background:var(--s${Array.isArray(color) ? color[gi] : color})"></div></div></li>`).join("")}</ul>`;
 }
+// 칸 안의 주소를 누를 수 있는 링크로 (주소만 있으면 '열기 ↗', 글자와 섞여 있으면 그 주소만 링크)
+function linkText(v){
+  const re = /https?:\/\/[^\s,<>"']+/g;
+  if (/^\s*https?:\/\/[^\s,<>"']+\s*$/.test(v)) return `<a href="${esc(v.trim())}" target="_blank" rel="noopener noreferrer">열기 ↗</a>`;
+  let out = "", last = 0, m;
+  while ((m = re.exec(v))){ out += esc(v.slice(last, m.index)) + `<a href="${esc(m[0])}" target="_blank" rel="noopener noreferrer">링크 ↗</a>`; last = m.index + m[0].length; }
+  return out + esc(v.slice(last));
+}
 function renderRevenuePage(view, p, d){
   const R = p.revenue, S = revenueSummary(d, R), rows = S.rows, M = S.money;
   if (!rows.length){
@@ -788,6 +796,7 @@ function renderRevenuePage(view, p, d){
           const em = v.match(/^\s*"?([^"<]*?)"?\s*<([^>\s]+@[^>\s]+)>\s*$/);
           if (em) return `<td>${esc(em[1].trim() || em[2])}<br><a href="mailto:${esc(em[2])}" class="muted" style="font-size:12px">${esc(em[2])}</a></td>`;
           if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return `<td><a href="mailto:${esc(v)}">${esc(v)}</a></td>`;
+          if (/https?:\/\//.test(v)) return `<td>${linkText(v)}</td>`;   // 계약서·인사이트 등 링크
           return `<td class="${dateLike(i) ? "nowrap" : ""}">${esc(v)}</td>`;
         }).join("")}</tr>`).join("")}</tbody>
         <tfoot><tr><td>합계</td>${cols.map(i => i === amtI ? `<td class="num">${fmtWon(S.total)}</td>` : "<td></td>").join("")}</tr></tfoot>
